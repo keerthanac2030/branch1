@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  todo-php:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: todo-php
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./frontend:/var/www/html/public
+    environment:
+      - DB_HOST=todo-mysql
+      - DB_USER=root
+      - DB_PASSWORD=root123
+      - DB_NAME=todoapp
+    depends_on:
+      - todo-mysql
+    networks:
+      - todo-network
+
+  todo-mysql:
+    image: mysql:8.0
+    container_name: todo-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: todoapp
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    networks:
+      - todo-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+volumes:
+  mysql_data:
+
+networks:
+  todo-network:
+    driver: bridge
